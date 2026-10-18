@@ -85,8 +85,34 @@ function renderScoreTable(me) {
       html+=`<td class="score-cell ${isMine?'mine':''}">${content}</td>`;
     }
     html+="</tr>";
+    // Nach dem oberen Block Zwischensumme und Bonus anzeigen
+    if (cat === "sixes") {
+      html += `<tr class="category-row">
+        <td><strong>Zwischensumme oben</strong></td>
+        ${players.map(p => {
+          const upperSum = upper.reduce(
+            (sum, key) => sum + (Number.isFinite(p.scores[key]) ? p.scores[key] : 0),
+            0
+          );
+          return `<td><strong>${upperSum}</strong></td>`;
+        }).join("")}
+      </tr>`;
+
+      html += `<tr class="category-row upper-end">
+        <td>Bonus (ab 63)</td>
+        ${players.map(p => {
+          const upperSum = upper.reduce(
+            (sum, key) => sum + (Number.isFinite(p.scores[key]) ? p.scores[key] : 0),
+            0
+          );
+          const bonus = upperSum >= 63 ? 35 : 0;
+          return `<td><strong>${bonus ? "+" + bonus : "—"}</strong></td>`;
+        }).join("")}
+      </tr>`;
+    }
   }
-  html+=`<tr><td><strong>Gesamt</strong></td>${players.map(p=>`<td><strong>${p.total}</strong></td>`).join("")}</tr></tbody>`;
+
+  html+=`<tr><td><strong>Gesamt inkl. Bonus</strong></td>${players.map(p=>`<td><strong>${p.total}</strong></td>`).join("")}</tr></tbody>`;
   $("scoreTable").innerHTML=html;
   document.querySelectorAll("[data-score]").forEach(btn=>btn.addEventListener("click",()=>socket.emit("score",btn.dataset.score)));
 }
