@@ -99,6 +99,27 @@ function nextPlayer() {
 }
 io.on("connection", socket => {
   socket.emit("state", publicState());
+  socket.on("resetRound", () => {
+    // Nur Spieler im Raum dürfen die Runde zurücksetzen.
+    if (!players.some(p => p.id === socket.id && p.connected)) return;
+
+    // Spieler entfernen, die die Verbindung verloren haben.
+    players = players.filter(p => p.connected);
+
+    // Punkte aller verbliebenen Spieler zurücksetzen.
+    for (const player of players) {
+      scores.set(player.id, {});
+    }
+
+    // Aktuelle Runde beenden.
+    gameStarted = false;
+    currentPlayerId = null;
+    turn = null;
+
+    lastMessage = "Runde zurückgesetzt. Ihr könnt neu starten.";
+
+    broadcast();
+  });
   socket.on("join", rawName => {
     if (players.some(p=>p.id===socket.id)) return;
     if (gameStarted) { socket.emit("notice","Das Spiel läuft bereits. Neue Mitspieler können erst in einer neuen Runde beitreten."); return; }
