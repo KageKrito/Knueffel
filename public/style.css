@@ -37,3 +37,16 @@
   font-size: 0.95em;
   font-weight: 500;
 }
+
+/* Spalte des Spielers, der gerade am Zug ist */
+.scoreTable .active-player-column,
+#scoreTable .active-player-column {
+  background-color: #edf6ef;
+}
+
+/* Name des aktiven Spielers etwas deutlicher hervorheben */
+#scoreTable thead th.active-player-column {
+  box-shadow: inset 0 3px 0 #55966a;
+  color: #28633b;
+  font-weight: 800;
+}

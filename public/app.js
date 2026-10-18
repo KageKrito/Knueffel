@@ -123,7 +123,14 @@ function calculateScore(category, dice) {
 function renderScoreTable(me) {
   const cats=[...upper,...lower];
   const players=state.players;
-  let html=`<thead><tr><th>Kategorie</th>${players.map(p=>`<th>${escapeHtml(p.name)}${p.id===myId?' · DU':''}</th>`).join("")}</tr></thead><tbody>`;
+  let html = `<thead><tr>
+    <th>Kategorie</th>
+    ${players.map(p => `
+      <th class="${state.gameStarted && p.id === state.currentPlayerId ? "active-player-column" : ""}">
+        ${escapeHtml(p.name)}${p.id === myId ? " · DU" : ""}
+      </th>
+    `).join("")}
+  </tr></thead><tbody>`;
   for(const cat of cats) {
     const isUpper=upper.includes(cat);
     if(cat==="threeKind") html+=`<tr><td colspan="${players.length+1}" style="text-align:left;background:#f7f8f5;font-size:10px;letter-spacing:1px;font-weight:850;color:#718078">UNTERER BLOCK</td></tr>`;
@@ -162,7 +169,7 @@ function renderScoreTable(me) {
       } else {
         content = "—";
       }
-      html += `<td class="score-cell ${isMine ? "mine" : ""} ${cellClass}">${content}</td>`;
+      html += `<td class="score-cell ${isMine ? "mine" : ""} ${cellClass} ${state.gameStarted && p.id === state.currentPlayerId ? "active-player-column" : ""}">${content}</td>`;
     }
     html+="</tr>";
     // Nach den Sechsern: fehlende Punkte und obere Summe inklusive Bonus
