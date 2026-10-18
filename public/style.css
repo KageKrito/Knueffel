@@ -50,3 +50,19 @@
   color: #28633b;
   font-weight: 800;
 }
+
+/* Neustart-Button dezent rot hervorheben */
+#resetBtn {
+  background-color: #f8e7e7;
+  color: #9b3535;
+  border: 1px solid #e8c2c2;
+}
+
+#resetBtn:hover {
+  background-color: #f2d6d6;
+  border-color: #dbaaaa;
+}
+
+#resetBtn:active {
+  background-color: #ebc5c5;
+}
