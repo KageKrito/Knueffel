@@ -75,6 +75,51 @@ function render() {
 }
 const upper=["ones","twos","threes","fours","fives","sixes"];
 const lower=["threeKind","fourKind","fullHouse","smallStraight","largeStraight","knueffel","chance"];
+function calculateScore(category, dice) {
+  const counts = Array(7).fill(0);
+  dice.forEach(d => counts[d]++);
+  const sum = dice.reduce((a, b) => a + b, 0);
+
+  const upperMap = {
+    ones: 1, twos: 2, threes: 3,
+    fours: 4, fives: 5, sixes: 6
+  };
+
+  if (upperMap[category]) {
+    return counts[upperMap[category]] * upperMap[category];
+  }
+
+  switch (category) {
+    case "threeKind":
+      return counts.some(n => n >= 3) ? sum : 0;
+
+    case "fourKind":
+      return counts.some(n => n >= 4) ? sum : 0;
+
+    case "fullHouse":
+      return counts.includes(3) && counts.includes(2) ? 25 : 0;
+
+    case "smallStraight": {
+      const set = new Set(dice);
+      return [[1,2,3,4], [2,3,4,5], [3,4,5,6]]
+        .some(s => s.every(n => set.has(n))) ? 30 : 0;
+    }
+
+    case "largeStraight": {
+      const s = [...new Set(dice)].sort().join("");
+      return s === "12345" || s === "23456" ? 40 : 0;
+    }
+
+    case "knueffel":
+      return counts.includes(5) ? 50 : 0;
+
+    case "chance":
+      return sum;
+
+    default:
+      return 0;
+  }
+}
 function renderScoreTable(me) {
   const cats=[...upper,...lower];
   const players=state.players;
@@ -86,12 +131,38 @@ function renderScoreTable(me) {
     for(const p of players) {
       const value=p.scores[cat];
       const isMine=p.id===myId;
-      const available=isMine && state.gameStarted && state.currentPlayerId===myId && state.turn && state.turn.rollsLeft<3 && !Number.isFinite(value);
+      const isCurrentPlayer = state.gameStarted && state.currentPlayerId === myId;
+      const canPreview =
+        p.id === state.currentPlayerId &&
+        state.gameStarted &&
+        state.turn &&
+        state.turn.rollsLeft < 3 &&
+        !Number.isFinite(value);
+      const available = isMine && isCurrentPlayer && canPreview;
       let content;
-      if(Number.isFinite(value)) content=`<span class="filled ${value===0?'zero':''}">${value}</span>`;
-      else if(available) content=`<button data-score="${cat}" title="${state.labels[cat]} eintragen">Eintragen</button>`;
-      else content="—";
-      html+=`<td class="score-cell ${isMine?'mine':''}">${content}</td>`;
+      let cellClass = "";
+
+      if (Number.isFinite(value)) {
+        // Bereits eingetragene Punkte
+        content = `<span class="filled ${value === 0 ? "zero" : ""}">${value}</span>`;
+        cellClass = "score-filled";
+      } else if (canPreview) {
+        // Vorschau für alle Spieler
+        const preview = calculateScore(cat, state.turn.dice);
+
+        if (available) {
+          // Eigener Zug: farbig und anklickbar
+          content = `<button class="score-preview" data-score="${cat}" title="${state.labels[cat]} eintragen">${preview}</button>`;
+          cellClass = "score-available";
+        } else {
+          // Andere Spieler: dezente graue Vorschau
+          content = `<span class="score-ghost" title="Mögliche Punkte im aktuellen Zug">${preview}</span>`;
+          cellClass = "";
+        }
+      } else {
+        content = "—";
+      }
+      html += `<td class="score-cell ${isMine ? "mine" : ""} ${cellClass}">${content}</td>`;
     }
     html+="</tr>";
     // Nach den Sechsern: fehlende Punkte und obere Summe inklusive Bonus
