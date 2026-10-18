@@ -12,13 +12,13 @@ app.use(express.static("public"));
 const CATEGORIES = [
   "ones", "twos", "threes", "fours", "fives", "sixes",
   "threeKind", "fourKind", "fullHouse", "smallStraight",
-  "largeStraight", "kniffel", "chance"
+  "largeStraight", "knueffel", "chance"
 ];
 const LABELS = {
   ones:"Einser", twos:"Zweier", threes:"Dreier", fours:"Vierer",
   fives:"Fünfer", sixes:"Sechser", threeKind:"Dreierpasch",
   fourKind:"Viererpasch", fullHouse:"Full House", smallStraight:"Kleine Straße",
-  largeStraight:"Große Straße", kniffel:"Kniffel", chance:"Chance"
+  largeStraight:"Große Straße", knueffel:"Knueffel", chance:"Chance"
 };
 let players = [];
 let currentPlayerId = null;
@@ -67,7 +67,7 @@ function scoreRoll(dice, category) {
       const s = [...new Set(dice)].sort().join("");
       return s === "12345" || s === "23456" ? 40 : 0;
     }
-    case "kniffel": return counts.includes(5) ? 50 : 0;
+    case "knueffel": return counts.includes(5) ? 50 : 0;
     case "chance": return sum;
     default: return 0;
   }
@@ -175,4 +175,4 @@ io.on("connection", socket => {
   });
 });
 
-server.listen(PORT, () => console.log(`Kniffel läuft auf http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`Knueffel läuft auf http://localhost:${PORT}`));

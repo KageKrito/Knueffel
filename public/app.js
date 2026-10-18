@@ -74,7 +74,7 @@ function render() {
   renderScoreTable(me);
 }
 const upper=["ones","twos","threes","fours","fives","sixes"];
-const lower=["threeKind","fourKind","fullHouse","smallStraight","largeStraight","kniffel","chance"];
+const lower=["threeKind","fourKind","fullHouse","smallStraight","largeStraight","knueffel","chance"];
 function renderScoreTable(me) {
   const cats=[...upper,...lower];
   const players=state.players;

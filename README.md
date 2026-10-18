@@ -1,6 +1,6 @@
-# Kniffel mit Freunden
+# Knueffel mit Freunden
 
-Ein einfacher Echtzeit-Kniffelraum mit einem gemeinsamen Raum, ohne Lobby-System. Der Server verwaltet Würfe und Punkte, alle Browser sehen denselben Spielstand.
+Ein einfacher Echtzeit-Knueffelraum mit einem gemeinsamen Raum, ohne Lobby-System. Der Server verwaltet Würfe und Punkte, alle Browser sehen denselben Spielstand.
 
 ## Voraussetzungen
 - Node.js 18 oder neuer
@@ -20,11 +20,11 @@ Damit Freunde von anderen Geräten/Orten mitspielen können, muss der Node-Serve
 - Ein gemeinsamer Raum, bis zu 8 Spieler
 - Echtzeit-Updates über Socket.IO
 - Bis zu drei Würfe pro Zug, Würfel behalten
-- Alle 13 Kniffel-Kategorien
+- Alle 13 Knueffel-Kategorien
 - 35 Bonuspunkte ab 63 Punkten im oberen Block
 - Serverseitige Prüfung von Würfen und Einträgen
 
 ## Hinweise
 - Dies ist ein einfacher Prototyp ohne Datenbank. Der Spielstand lebt nur im Arbeitsspeicher des Servers und geht beim Neustart verloren.
 - Spieler sollten vor dem Start beitreten. Ein Spielstand lässt sich aktuell nicht nach einem Browser-Neuladen wieder aufnehmen.
-- Die Punktewertung nutzt die üblichen Kniffel-Grundregeln. Sonderregeln für zusätzliche Kniffel sind nicht implementiert.
+- Die Punktewertung nutzt die üblichen Knueffel-Grundregeln. Sonderregeln für zusätzliche Knueffel sind nicht implementiert.
