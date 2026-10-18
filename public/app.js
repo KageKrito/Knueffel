@@ -1,5 +1,24 @@
 const socket = io();
 const $ = id => document.getElementById(id);
+const themeToggle = $("themeToggle");
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+
+  themeToggle.textContent =
+    theme === "dark" ? "☀️ Lightmode" : "🌙 Darkmode";
+}
+
+const savedTheme = localStorage.getItem("knueffel-theme") || "light";
+applyTheme(savedTheme);
+
+themeToggle.addEventListener("click", () => {
+  const newTheme =
+    document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+
+  localStorage.setItem("knueffel-theme", newTheme);
+  applyTheme(newTheme);
+});
 let state = null;
 let myId = null;
 let myName = "";
