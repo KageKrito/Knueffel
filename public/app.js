@@ -36,6 +36,15 @@ socket.on("state",s=>{
 });
 $("startBtn").addEventListener("click",()=>socket.emit("startGame"));
 $("rollBtn").addEventListener("click",()=>socket.emit("roll"));
+$("resetBtn").addEventListener("click", () => {
+  const confirmed = confirm(
+    "Möchtest du die Runde wirklich zurücksetzen? Alle Punkte gehen verloren."
+  );
+
+  if (confirmed) {
+    socket.emit("resetRound");
+  }
+});
 
 function render() {
   if(!state) return;
