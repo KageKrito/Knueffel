@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kniffel mit Freunden</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/socket.io/socket.io.js" defer></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-icon">⚄</span><div><h1>Kniffel</h1><p>Ein Raum. Deine Freunde. Fünf Würfel.</p></div></div>
+      <span class="live"><i></i> LIVE-RAUM</span>
+    </header>
+
+    <section id="joinPanel" class="panel join-panel">
+      <div class="eyebrow">WILLKOMMEN AM SPIELTISCH</div>
+      <h2>Wer spielt mit?</h2>
+      <p>Wähle einen Namen und tritt dem gemeinsamen Raum bei.</p>
+      <form id="joinForm" class="join-form">
+        <input id="nameInput" maxlength="20" placeholder="Dein Name" autocomplete="nickname" required>
+        <button class="primary" type="submit">Mitspielen <span>→</span></button>
+      </form>
+      <small>Bis zu 8 Spieler · Alle im selben Raum</small>
+    </section>
+
+    <div id="game" class="game hidden">
+      <section class="main-column">
+        <section class="panel turn-panel">
+          <div class="turn-heading">
+            <div><div class="eyebrow">AM ZUG</div><h2 id="turnTitle">Warte auf Spieler …</h2></div>
+            <div class="roll-counter"><strong id="rollsLeft">3</strong><span>WÜRFE ÜBRIG</span></div>
+          </div>
+          <div id="diceTray" class="dice-tray"></div>
+          <p id="diceHint" class="hint">Würfle, dann klicke Würfel an, um sie zu behalten.</p>
+          <div class="actions">
+            <button id="rollBtn" class="primary">⚄ Würfeln</button>
+            <button id="startBtn" class="secondary">Spiel starten</button>
+          </div>
+          <p id="turnMessage" class="status-message" aria-live="polite"></p>
+        </section>
+
+        <section class="panel score-panel">
+          <div class="section-heading"><div><div class="eyebrow">PUNKTEJAGD</div><h2>Kniffelblock</h2></div><span class="score-note">Wähle eine Kategorie zum Eintragen</span></div>
+          <div class="table-wrap"><table id="scoreTable"></table></div>
+          <p class="bonus-note">★ Ab 63 Punkten im oberen Block gibt es 35 Bonuspunkte.</p>
+        </section>
+      </section>
+
+      <aside class="panel players-panel">
+        <div class="section-heading"><div><div class="eyebrow">AM TISCH</div><h2>Spieler</h2></div><span id="playerCount" class="count">0</span></div>
+        <div id="playersList" class="players-list"></div>
+        <div class="room-info"><span class="room-dot"></span><div><strong>Gemeinsamer Raum</strong><p>Teile einfach die Website-Adresse mit deinen Freunden.</p></div></div>
+      </aside>
+    </div>
+    <div id="notice" class="notice hidden" role="status"></div>
+    <footer>Ein kleines Spiel für gute Runden. <span>Viel Glück! ✦</span></footer>
+  </main>
+</body>
+</html>
