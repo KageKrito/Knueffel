@@ -22,6 +22,17 @@ themeToggle.addEventListener("click", () => {
 let state = null;
 let myId = null;
 let myName = "";
+const playerColors = [
+  { bg: "#dceafe", text: "#244b85", darkBg: "#263d5c", darkText: "#e0edff" },
+  { bg: "#d9f2df", text: "#24653a", darkBg: "#254a32", darkText: "#dcfce5" },
+  { bg: "#fbe4c7", text: "#8a4b12", darkBg: "#5b3b20", darkText: "#ffebd1" },
+  { bg: "#eedfff", text: "#663d91", darkBg: "#48305f", darkText: "#f0e2ff" }
+];
+
+function getPlayerColor(playerId) {
+  const index = state.players.findIndex(p => p.id === playerId);
+  return playerColors[Math.max(0, index) % playerColors.length];
+}
 const pipPositions = {
   1:[[22,22]], 2:[[12,12],[32,32]], 3:[[12,12],[22,22],[32,32]],
   4:[[12,12],[32,12],[12,32],[32,32]],
@@ -70,13 +81,19 @@ function render() {
   const me=state.players.find(p=>p.id===myId);
   const isMyTurn=state.gameStarted && state.currentPlayerId===myId;
   $("playerCount").textContent=state.players.length;
-  $("playersList").innerHTML=state.players.map((p,i)=>`
-    <div class="player ${p.id===state.currentPlayerId&&state.gameStarted?'active':''}">
+  $("playersList").innerHTML=state.players.map((p,i)=>{
+    const color = getPlayerColor(p.id);
+    return `
+    <div
+      class="player ${p.id===state.currentPlayerId&&state.gameStarted?'active':''}"
+      style="--player-bg:${color.bg};--player-text:${color.text};--player-dark-bg:${color.darkBg};--player-dark-text:${color.darkText}"
+    >
       <div class="avatar">${escapeHtml(p.name.slice(0,1).toUpperCase())}</div>
       <div class="player-info"><div class="player-name">${escapeHtml(p.name)}${p.id===myId?' (Du)':''}</div>
       <div class="player-sub">${!p.connected?'Verbindung verloren':p.id===state.currentPlayerId&&state.gameStarted?'Ist am Zug':state.gameStarted?'Spielt mit':'Bereit'}</div></div>
       <div class="player-points">${p.total}</div>
-    </div>`).join("");
+        </div>`;
+  }).join("");
   $("turnTitle").textContent=state.gameStarted?`${state.currentPlayerName} würfelt`:"Bereit für eine Runde?";
   $("rollsLeft").textContent=state.turn?.rollsLeft ?? 3;
   $("turnMessage").textContent=state.lastMessage||"";
@@ -158,12 +175,20 @@ function renderScoreTable(me) {
 
   function renderHeader() {
     return `<thead><tr>
-      <th>Kat</th>
-      ${players.map(p => `
-        <th class="${isGameStarted && p.id === currentPlayerId ? "active-player-column" : ""}">
-          ${escapeHtml(p.name)}${p.id === myId ? " · DU" : ""}
-        </th>
-      `).join("")}
+      <th class="category-header">Kat</th>
+      ${players.map(p => {
+        const color = getPlayerColor(p.id);
+        return `
+          <th
+            class="player-color-header ${isGameStarted && p.id === currentPlayerId ? "active-player-column" : ""}"
+            style="--player-bg:${color.bg};--player-text:${color.text};--player-dark-bg:${color.darkBg};--player-dark-text:${color.darkText}"
+            title="${escapeHtml(p.name)}${p.id === myId ? " (Du)" : ""}"
+            aria-label="${escapeHtml(p.name)}"
+          >
+            <span class="player-color-dot"></span>
+          </th>
+        `;
+      }).join("")}
     </tr></thead>`;
   }
 
@@ -202,7 +227,12 @@ function renderScoreTable(me) {
         content = "—";
       }
 
-      html += `<td class="score-cell ${isMine ? "mine" : ""} ${cellClass} ${isCurrentPlayer ? "active-player-column" : ""}">${content}</td>`;
+      const color = getPlayerColor(p.id);
+
+      html += `<td
+        class="score-cell player-score-column ${isMine ? "mine" : ""} ${cellClass} ${isCurrentPlayer ? "active-player-column" : ""}"
+        style="--player-bg:${color.bg};--player-text:${color.text};--player-dark-bg:${color.darkBg};--player-dark-text:${color.darkText}"
+      >${content}</td>`;
     }
 
     return html + "</tr>";
@@ -212,32 +242,40 @@ function renderScoreTable(me) {
   let upperHtml = renderHeader() + "<tbody>";
 
   for (const cat of upper) {
-    upperHtml += renderCategory(cat);
+  upperHtml += renderCategory(cat);
 
-    if (cat === "sixes") {
-      upperHtml += `<tr class="category-row bonus-row">
-        <td>Boni</td>
-        ${players.map(p => {
-          const sum = upperSum(p);
-          return `<td class="${isGameStarted && p.id === currentPlayerId ? "active-player-column" : ""}">
-            ${sum >= 63
-              ? '<strong class="bonus-achieved">+35 ✓</strong>'
-              : `-${63 - sum}`}
-          </td>`;
-        }).join("")}
-      </tr>`;
+  if (cat === "sixes") {
+    upperHtml += `<tr class="category-row bonus-row">
+      <td>Boni</td>
+      ${players.map(p => {
+        const sum = upperSum(p);
+        const color = getPlayerColor(p.id);
+        const isCurrentPlayer = isGameStarted && p.id === currentPlayerId;
 
-      upperHtml += `<tr class="category-row upper-end">
-        <td><strong>Ges</strong></td>
-        ${players.map(p => {
-          const sum = upperSum(p);
-          return `<td class="${isGameStarted && p.id === currentPlayerId ? "active-player-column" : ""}">
-            <strong>${sum + (sum >= 63 ? 35 : 0)}</strong>
-          </td>`;
-        }).join("")}
-      </tr>`;
-    }
+        return `<td class="score-cell player-score-column ${isCurrentPlayer ? "active-player-column" : ""}"
+          style="--player-bg:${color.bg};--player-text:${color.text};--player-dark-bg:${color.darkBg};--player-dark-text:${color.darkText}">
+          ${sum >= 63
+            ? '<strong class="bonus-achieved">+35 ✓</strong>'
+            : `-${63 - sum}`}
+        </td>`;
+      }).join("")}
+    </tr>`;
+
+    upperHtml += `<tr class="category-row upper-end">
+      <td><strong>Ges</strong></td>
+      ${players.map(p => {
+        const sum = upperSum(p);
+        const color = getPlayerColor(p.id);
+        const isCurrentPlayer = isGameStarted && p.id === currentPlayerId;
+
+        return `<td class="score-cell player-score-column ${isCurrentPlayer ? "active-player-column" : ""}"
+          style="--player-bg:${color.bg};--player-text:${color.text};--player-dark-bg:${color.darkBg};--player-dark-text:${color.darkText}">
+          <strong>${sum + (sum >= 63 ? 35 : 0)}</strong>
+        </td>`;
+      }).join("")}
+    </tr>`;
   }
+}
 
   upperHtml += "</tbody>";
 
@@ -250,12 +288,18 @@ function renderScoreTable(me) {
 
   lowerHtml += `<tr class="category-row">
     <td><strong>Ges</strong></td>
-    ${players.map(p => `
-      <td class="${isGameStarted && p.id === currentPlayerId ? "active-player-column" : ""}">
-        <strong>${lowerSum(p)}</strong>
-      </td>
-    `).join("")}
-  </tr>`;
+      ${players.map(p => {
+        const color = getPlayerColor(p.id);
+        const isCurrentPlayer = isGameStarted && p.id === currentPlayerId;
+
+        return `<td
+          class="score-cell player-score-column ${isCurrentPlayer ? "active-player-column" : ""}"
+          style="--player-bg:${color.bg};--player-text:${color.text};--player-dark-bg:${color.darkBg};--player-dark-text:${color.darkText}"
+        >
+          <strong>${lowerSum(p)}</strong>
+        </td>`;
+      }).join("")}
+      </tr>`;
 
   lowerHtml += "</tbody>";
 
