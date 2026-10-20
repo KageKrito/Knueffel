@@ -784,3 +784,22 @@ font-size: 10px;
   background-color: var(--player-dark-bg) !important;
   color: var(--player-dark-text) !important;
 }
+
+/* Am Tisch: Spielerkarte vollständig in Spielerfarbe */
+.player-card {
+  background-color: var(--player-bg) !important;
+  border-color: var(--player-bg) !important;
+  color: var(--player-text) !important;
+}
+
+/* Elemente innerhalb der Spielerkarte ebenfalls einfärben */
+.player-card * {
+  border-color: inherit;
+}
+
+/* Dunkelmodus */
+:root[data-theme="dark"] .player-card {
+  background-color: var(--player-dark-bg) !important;
+  border-color: var(--player-dark-bg) !important;
+  color: var(--player-dark-text) !important;
+}
