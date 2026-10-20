@@ -50,11 +50,25 @@ function showNotice(message) {
   showNotice.timer = setTimeout(()=>$("notice").classList.add("hidden"),3500);
 }
 socket.on("connect",()=>{myId=socket.id;});
-socket.on("notice",showNotice);
-$("joinForm").addEventListener("submit",e=>{
+socket.on("notice", showNotice);
+
+$("joinForm").addEventListener("submit", e => {
   e.preventDefault();
-  myName=$("nameInput").value.trim();
-  if(myName) socket.emit("join",myName);
+
+  myName = $("nameInput").value.trim();
+  if (!myName) return;
+
+  let playerKey = localStorage.getItem("knueffelPlayerKey");
+
+  if (!playerKey) {
+    playerKey = crypto.randomUUID();
+    localStorage.setItem("knueffelPlayerKey", playerKey);
+  }
+
+  socket.emit("join", {
+    name: myName,
+    playerKey: playerKey
+  });
 });
 socket.on("state",s=>{
   state=s;

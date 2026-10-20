@@ -120,14 +120,70 @@ io.on("connection", socket => {
 
     broadcast();
   });
-  socket.on("join", rawName => {
-    if (players.some(p=>p.id===socket.id)) return;
-    if (gameStarted) { socket.emit("notice","Das Spiel läuft bereits. Neue Mitspieler können erst in einer neuen Runde beitreten."); return; }
-    const name = String(rawName || "").trim().slice(0,20);
-    if (!name) { socket.emit("notice","Bitte gib einen Namen ein."); return; }
-    if (players.length >= 8) { socket.emit("notice","Der Raum ist voll (maximal 8 Spieler)."); return; }
-    players.push({id:socket.id,name,connected:true});
-    scores.set(socket.id,{});
+  socket.on("join", data => {
+    const name = String(
+      typeof data === "string" ? data : data?.name || ""
+    ).trim().slice(0, 20);
+
+    const playerKey = String(
+      typeof data === "object" ? data?.playerKey || "" : ""
+    );
+
+    if (!name || !playerKey || playerKey.length > 100) {
+      socket.emit("notice", "Spielerinformationen fehlen. Bitte erneut beitreten.");
+      return;
+    }
+
+    // Spieler anhand seiner dauerhaften ID wiederfinden.
+    const existing = players.find(p => p.playerKey === playerKey);
+
+    if (existing) {
+      // Alte Socket-ID merken und durch die neue ersetzen.
+      const oldId = existing.id;
+      existing.id = socket.id;
+      existing.connected = true;
+      existing.name = name;
+
+      // Spielstand auf die neue Socket-ID übertragen.
+      if (scores.has(oldId)) {
+        scores.set(socket.id, scores.get(oldId));
+        scores.delete(oldId);
+      } else if (!scores.has(socket.id)) {
+        scores.set(socket.id, {});
+      }
+
+      // Falls der Spieler gerade am Zug war, bleibt er am Zug.
+      if (currentPlayerId === oldId) {
+        currentPlayerId = socket.id;
+      }
+
+      lastMessage = `${name} ist wieder verbunden.`;
+      broadcast();
+      return;
+    }
+
+    // Neue Spieler dürfen keiner laufenden Runde beitreten.
+    if (gameStarted) {
+      socket.emit(
+        "notice",
+        "Das Spiel läuft bereits. Neue Mitspieler können erst in einer neuen Runde beitreten."
+      );
+      return;
+    }
+
+    if (players.length >= 8) {
+      socket.emit("notice", "Der Raum ist voll (maximal 8 Spieler).");
+      return;
+    }
+
+    players.push({
+      id: socket.id,
+      playerKey,
+      name,
+      connected: true
+    });
+
+    scores.set(socket.id, {});
     lastMessage = `${name} ist beigetreten.`;
     broadcast();
   });
@@ -160,17 +216,14 @@ io.on("connection", socket => {
     broadcast();
   });
   socket.on("disconnect", () => {
-    const p = players.find(p=>p.id===socket.id);
+    const p = players.find(player => player.id === socket.id);
     if (!p) return;
-    if (gameStarted && currentPlayerId === socket.id) {
-      // Keep the player and their score in the room; they can reconnect only by refreshing isn't supported in this starter.
-      p.connected = false;
-      lastMessage = `${p.name} hat die Verbindung verloren. Der Zug bleibt bestehen.`;
-    } else {
-      players = players.filter(x=>x.id!==socket.id);
-      scores.delete(socket.id);
-      if (!players.length) { gameStarted=false; turn=null; currentPlayerId=null; }
-    }
+
+    // Spieler und Spielstand vorübergehend behalten.
+    p.connected = false;
+
+    lastMessage = `${p.name} hat die Verbindung verloren. Der Platz bleibt reserviert.`;
+
     broadcast();
   });
 });
