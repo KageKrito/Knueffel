@@ -140,136 +140,133 @@ function calculateScore(category, dice) {
   }
 }
 function renderScoreTable(me) {
-  const cats=[...upper,...lower];
-  const players=state.players;
-  let html = `<thead><tr>
-    <th>Kategorie</th>
-    ${players.map(p => `
-      <th class="${state.gameStarted && p.id === state.currentPlayerId ? "active-player-column" : ""}">
-        ${escapeHtml(p.name)}${p.id === myId ? " · DU" : ""}
-      </th>
-    `).join("")}
-  </tr></thead><tbody>`;
-  for(const cat of cats) {
-    html+=`<tr class="category-row ${cat==='sixes'?'upper-end':''} ${cat==='threeKind'?'lower-start':''}"><td>${state.labels[cat]}</td>`;
-    for(const p of players) {
-      const value=p.scores[cat];
-      const isMine=p.id===myId;
-      const isCurrentPlayer = state.gameStarted && state.currentPlayerId === myId;
+  const players = state.players;
+  const currentPlayerId = state.currentPlayerId;
+  const isGameStarted = state.gameStarted;
+
+  const upperSum = p => upper.reduce(
+    (sum, key) =>
+      sum + (Number.isFinite(p.scores[key]) ? p.scores[key] : 0),
+    0
+  );
+
+  const lowerSum = p => lower.reduce(
+    (sum, key) =>
+      sum + (Number.isFinite(p.scores[key]) ? p.scores[key] : 0),
+    0
+  );
+
+  function renderHeader() {
+    return `<thead><tr>
+      <th>Kategorie</th>
+      ${players.map(p => `
+        <th class="${isGameStarted && p.id === currentPlayerId ? "active-player-column" : ""}">
+          ${escapeHtml(p.name)}${p.id === myId ? " · DU" : ""}
+        </th>
+      `).join("")}
+    </tr></thead>`;
+  }
+
+  function renderCategory(cat) {
+    let html = `<tr class="category-row ${cat === "sixes" ? "upper-end" : ""}">
+      <td>${escapeHtml(state.labels[cat])}</td>`;
+
+    for (const p of players) {
+      const value = p.scores[cat];
+      const isMine = p.id === myId;
+      const isCurrentPlayer =
+        isGameStarted && p.id === currentPlayerId;
+
       const canPreview =
-        p.id === state.currentPlayerId &&
-        state.gameStarted &&
+        isCurrentPlayer &&
         state.turn &&
         state.turn.rollsLeft < 3 &&
         !Number.isFinite(value);
-      const available = isMine && isCurrentPlayer && canPreview;
+
       let content;
       let cellClass = "";
 
       if (Number.isFinite(value)) {
-        // Bereits eingetragene Punkte
         content = `<span class="filled ${value === 0 ? "zero" : ""}">${value}</span>`;
         cellClass = "score-filled";
       } else if (canPreview) {
-        // Vorschau für alle Spieler
         const preview = calculateScore(cat, state.turn.dice);
 
-        if (available) {
-          // Eigener Zug: farbig und anklickbar
-          content = `<button class="score-preview" data-score="${cat}" title="${state.labels[cat]} eintragen">${preview}</button>`;
+        if (isMine) {
+          content = `<button class="score-preview" data-score="${cat}" title="${escapeHtml(state.labels[cat])} eintragen">${preview}</button>`;
           cellClass = "score-available";
         } else {
-          // Andere Spieler: dezente graue Vorschau
-          content = `<span class="score-ghost" title="Mögliche Punkte im aktuellen Zug">${preview}</span>`;
-          cellClass = "";
+          content = `<span class="score-ghost">${preview}</span>`;
         }
       } else {
         content = "—";
       }
-      html += `<td class="score-cell ${isMine ? "mine" : ""} ${cellClass} ${state.gameStarted && p.id === state.currentPlayerId ? "active-player-column" : ""}">${content}</td>`;
-    }
-    html+="</tr>";
-    // Nach den Sechsern: genau zwei Zeilen
-    if (cat === "sixes") {
-      const upperSum = p => upper.reduce(
-        (sum, key) =>
-          sum + (Number.isFinite(p.scores[key]) ? p.scores[key] : 0),
-        0
-      );
 
-      // Zeile 1: Fehlende Punkte oder erreichter Bonus
-      html += `<tr class="category-row bonus-row">
+      html += `<td class="score-cell ${isMine ? "mine" : ""} ${cellClass} ${isCurrentPlayer ? "active-player-column" : ""}">${content}</td>`;
+    }
+
+    return html + "</tr>";
+  }
+
+  // LINKE TABELLE: oberer Block
+  let upperHtml = renderHeader() + "<tbody>";
+
+  for (const cat of upper) {
+    upperHtml += renderCategory(cat);
+
+    if (cat === "sixes") {
+      upperHtml += `<tr class="category-row bonus-row">
         <td>Bonus</td>
         ${players.map(p => {
           const sum = upperSum(p);
-          return sum >= 63
-            ? `<td><strong class="bonus-achieved">+35 ✓</strong></td>`
-            : `<td>noch ${63 - sum}</td>`;
+          return `<td class="${isGameStarted && p.id === currentPlayerId ? "active-player-column" : ""}">
+            ${sum >= 63
+              ? '<strong class="bonus-achieved">+35 ✓</strong>'
+              : `noch ${63 - sum}`}
+          </td>`;
         }).join("")}
       </tr>`;
 
-      // Zeile 2: Gesamtstand oben inklusive Bonus
-      html += `<tr class="category-row upper-end">
-        <td><strong>Gesamtstand oben</strong></td>
-        ${players.map(p => {
-          const sum = upperSum(p);
-          return `<td><strong>${sum + (sum >= 63 ? 35 : 0)}</strong></td>`;
-        }).join("")}
-      </tr>`;
-    }
-
-    // Nach Chance: Gesamt unten, Gesamt oben und Gesamtsumme
-    if (cat === "chance") {
-      const lowerSum = p => lower.reduce(
-        (sum, key) => sum + (Number.isFinite(p.scores[key]) ? p.scores[key] : 0),
-        0
-      );
-
-      const upperSum = p => upper.reduce(
-        (sum, key) => sum + (Number.isFinite(p.scores[key]) ? p.scores[key] : 0),
-        0
-      );
-
-      html += `<tr class="category-row">
-        <td><strong>Gesamt unten</strong></td>
-        ${players.map(p => `<td><strong>${lowerSum(p)}</strong></td>`).join("")}
-      </tr>`;
-
-      html += `<tr class="category-row">
+      upperHtml += `<tr class="category-row upper-end">
         <td><strong>Gesamt oben</strong></td>
         ${players.map(p => {
           const sum = upperSum(p);
-          return `<td><strong>${sum + (sum >= 63 ? 35 : 0)}</strong></td>`;
-        }).join("")}
-      </tr>`;
-
-      html += `<tr class="category-row upper-end">
-        <td><strong>GESAMTSUMME</strong></td>
-        ${players.map(p => {
-          const sum = upperSum(p);
-          const upperTotal = sum + (sum >= 63 ? 35 : 0);
-          return `<td><strong>${upperTotal + lowerSum(p)}</strong></td>`;
+          return `<td class="${isGameStarted && p.id === currentPlayerId ? "active-player-column" : ""}">
+            <strong>${sum + (sum >= 63 ? 35 : 0)}</strong>
+          </td>`;
         }).join("")}
       </tr>`;
     }
   }
 
-  html += "</tbody>";
-  $("scoreTable").innerHTML = html;
+  upperHtml += "</tbody>";
 
-  if (state.gameStarted) {
-    const currentIndex = state.players.findIndex(
-      p => p.id === state.currentPlayerId
-    );
+  // RECHTE TABELLE: unterer Block
+  let lowerHtml = renderHeader() + "<tbody>";
 
-    if (currentIndex !== -1) {
-      document.querySelectorAll("#scoreTable tr").forEach(row => {
-        const cell = row.children[currentIndex + 1];
-        if (cell) cell.classList.add("active-player-column");
-      });
-    }
+  for (const cat of lower) {
+    lowerHtml += renderCategory(cat);
   }
-  document.querySelectorAll("[data-score]").forEach(btn=>btn.addEventListener("click",()=>socket.emit("score",btn.dataset.score)));
+
+  lowerHtml += `<tr class="category-row">
+    <td><strong>Gesamt unten</strong></td>
+    ${players.map(p => `
+      <td class="${isGameStarted && p.id === currentPlayerId ? "active-player-column" : ""}">
+        <strong>${lowerSum(p)}</strong>
+      </td>
+    `).join("")}
+  </tr>`;
+
+  lowerHtml += "</tbody>";
+
+  $("upperScoreTable").innerHTML = upperHtml;
+  $("lowerScoreTable").innerHTML = lowerHtml;
+
+  document.querySelectorAll("[data-score]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      socket.emit("score", btn.dataset.score);
+    });
+  });
 }
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
