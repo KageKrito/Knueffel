@@ -151,9 +151,7 @@ function renderScoreTable(me) {
     `).join("")}
   </tr></thead><tbody>`;
   for(const cat of cats) {
-    const isUpper=upper.includes(cat);
-    if(cat==="threeKind") html+=`<tr><td colspan="${players.length+1}" style="text-align:left;background:#f7f8f5;font-size:10px;letter-spacing:1px;font-weight:850;color:#718078">UNTERER BLOCK</td></tr>`;
-    html+=`<tr class="category-row ${cat==='sixes'?'upper-end':''}"><td>${state.labels[cat]}</td>`;
+    html+=`<tr class="category-row ${cat==='sixes'?'upper-end':''} ${cat==='threeKind'?'lower-start':''}"><td>${state.labels[cat]}</td>`;
     for(const p of players) {
       const value=p.scores[cat];
       const isMine=p.id===myId;
@@ -191,28 +189,31 @@ function renderScoreTable(me) {
       html += `<td class="score-cell ${isMine ? "mine" : ""} ${cellClass} ${state.gameStarted && p.id === state.currentPlayerId ? "active-player-column" : ""}">${content}</td>`;
     }
     html+="</tr>";
-    // Nach den Sechsern: fehlende Punkte und obere Summe inklusive Bonus
+    // Nach den Sechsern: genau zwei Zeilen
     if (cat === "sixes") {
-      html += `<tr class="category-row">
-        <td>Fehlende Punkte bis Bonus (63)</td>
+      const upperSum = p => upper.reduce(
+        (sum, key) =>
+          sum + (Number.isFinite(p.scores[key]) ? p.scores[key] : 0),
+        0
+      );
+
+      // Zeile 1: Fehlende Punkte oder erreichter Bonus
+      html += `<tr class="category-row bonus-row">
+        <td>Bonus</td>
         ${players.map(p => {
-          const upperSum = upper.reduce(
-            (sum, key) => sum + (Number.isFinite(p.scores[key]) ? p.scores[key] : 0),
-            0
-          );
-          const missing = Math.max(0, 63 - upperSum);
-          return `<td>${missing === 0 ? "Bonus erreicht!" : missing}</td>`;
+          const sum = upperSum(p);
+          return sum >= 63
+            ? `<td><strong class="bonus-achieved">+35 ✓</strong></td>`
+            : `<td>noch ${63 - sum}</td>`;
         }).join("")}
       </tr>`;
 
+      // Zeile 2: Gesamtstand oben inklusive Bonus
       html += `<tr class="category-row upper-end">
-        <td><strong>Gesamt oben inkl. Bonus</strong></td>
+        <td><strong>Gesamtstand oben</strong></td>
         ${players.map(p => {
-          const upperSum = upper.reduce(
-            (sum, key) => sum + (Number.isFinite(p.scores[key]) ? p.scores[key] : 0),
-            0
-          );
-          return `<td><strong>${upperSum + (upperSum >= 63 ? 35 : 0)}</strong></td>`;
+          const sum = upperSum(p);
+          return `<td><strong>${sum + (sum >= 63 ? 35 : 0)}</strong></td>`;
         }).join("")}
       </tr>`;
     }
@@ -251,35 +252,23 @@ function renderScoreTable(me) {
         }).join("")}
       </tr>`;
     }
-    // Nach dem oberen Block Zwischensumme und Bonus anzeigen
-    if (cat === "sixes") {
-      html += `<tr class="category-row">
-        <td><strong>Zwischensumme oben</strong></td>
-        ${players.map(p => {
-          const upperSum = upper.reduce(
-            (sum, key) => sum + (Number.isFinite(p.scores[key]) ? p.scores[key] : 0),
-            0
-          );
-          return `<td><strong>${upperSum}</strong></td>`;
-        }).join("")}
-      </tr>`;
-
-      html += `<tr class="category-row upper-end">
-        <td>Bonus (ab 63)</td>
-        ${players.map(p => {
-          const upperSum = upper.reduce(
-            (sum, key) => sum + (Number.isFinite(p.scores[key]) ? p.scores[key] : 0),
-            0
-          );
-          const bonus = upperSum >= 63 ? 35 : 0;
-          return `<td><strong>${bonus ? "+" + bonus : "—"}</strong></td>`;
-        }).join("")}
-      </tr>`;
-    }
   }
 
   html += "</tbody>";
-  $("scoreTable").innerHTML=html;
+  $("scoreTable").innerHTML = html;
+
+  if (state.gameStarted) {
+    const currentIndex = state.players.findIndex(
+      p => p.id === state.currentPlayerId
+    );
+
+    if (currentIndex !== -1) {
+      document.querySelectorAll("#scoreTable tr").forEach(row => {
+        const cell = row.children[currentIndex + 1];
+        if (cell) cell.classList.add("active-player-column");
+      });
+    }
+  }
   document.querySelectorAll("[data-score]").forEach(btn=>btn.addEventListener("click",()=>socket.emit("score",btn.dataset.score)));
 }
 function escapeHtml(value) {
