@@ -15,10 +15,10 @@ const CATEGORIES = [
   "largeStraight", "knueffel", "chance"
 ];
 const LABELS = {
-  ones:"Einser", twos:"Zweier", threes:"Dreier", fours:"Vierer",
-  fives:"Fünfer", sixes:"Sechser", threeKind:"Dreierpasch",
-  fourKind:"Viererpasch", fullHouse:"Full House", smallStraight:"Kleine Straße",
-  largeStraight:"Große Straße", knueffel:"Knueffel", chance:"Chance"
+  ones:"1", twos:"2", threes:"3", fours:"4",
+  fives:"5", sixes:"6", threeKind:"3P",
+  fourKind:"4P", fullHouse:"FH", smallStraight:"KS",
+  largeStraight:"GS", knueffel:"Sui", chance:"Ch"
 };
 let players = [];
 let currentPlayerId = null;

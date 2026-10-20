@@ -158,7 +158,7 @@ function renderScoreTable(me) {
 
   function renderHeader() {
     return `<thead><tr>
-      <th>Kategorie</th>
+      <th>Kat</th>
       ${players.map(p => `
         <th class="${isGameStarted && p.id === currentPlayerId ? "active-player-column" : ""}">
           ${escapeHtml(p.name)}${p.id === myId ? " · DU" : ""}
@@ -216,19 +216,19 @@ function renderScoreTable(me) {
 
     if (cat === "sixes") {
       upperHtml += `<tr class="category-row bonus-row">
-        <td>Bonus</td>
+        <td>Boni</td>
         ${players.map(p => {
           const sum = upperSum(p);
           return `<td class="${isGameStarted && p.id === currentPlayerId ? "active-player-column" : ""}">
             ${sum >= 63
               ? '<strong class="bonus-achieved">+35 ✓</strong>'
-              : `noch ${63 - sum}`}
+              : `-${63 - sum}`}
           </td>`;
         }).join("")}
       </tr>`;
 
       upperHtml += `<tr class="category-row upper-end">
-        <td><strong>Gesamt oben</strong></td>
+        <td><strong>Ges</strong></td>
         ${players.map(p => {
           const sum = upperSum(p);
           return `<td class="${isGameStarted && p.id === currentPlayerId ? "active-player-column" : ""}">
@@ -249,7 +249,7 @@ function renderScoreTable(me) {
   }
 
   lowerHtml += `<tr class="category-row">
-    <td><strong>Gesamt unten</strong></td>
+    <td><strong>Ges</strong></td>
     ${players.map(p => `
       <td class="${isGameStarted && p.id === currentPlayerId ? "active-player-column" : ""}">
         <strong>${lowerSum(p)}</strong>
